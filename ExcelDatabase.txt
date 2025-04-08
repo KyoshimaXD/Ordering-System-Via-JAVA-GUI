@@ -1,0 +1,86 @@
+package restaurantorderingsystem;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.HashMap;
+
+public class Exceldatabase {
+    private static final String FILE_NAME = "Orders.xlsx";
+
+    public static void recordOrder(int tableNumber, String orderDetails, double total, HashMap<String, Double> menuPrices) {
+        Workbook workbook = null;
+        FileInputStream fis = null;
+        FileOutputStream fos = null;
+
+        try {
+            File file = new File(FILE_NAME);
+
+            if (file.exists()) {
+                fis = new FileInputStream(file);
+                workbook = new XSSFWorkbook(fis);
+                fis.close();
+            } else {
+                workbook = new XSSFWorkbook();
+            }
+
+            Sheet sheet = workbook.getSheet("Orders");
+            if (sheet == null) {
+                sheet = workbook.createSheet("Orders");
+                Row header = sheet.createRow(0);
+                header.createCell(0).setCellValue("Table Number");
+                header.createCell(1).setCellValue("Order Details");
+                header.createCell(2).setCellValue("Quantity");
+                header.createCell(3).setCellValue("Total");
+            }
+
+            
+            String[] items = orderDetails.split("\n");
+
+            for (String item : items) {
+                item = item.trim();
+                if (item.isEmpty()) continue;
+
+                String itemName = item.replaceAll("\\s*x\\d+", "").trim(); 
+                String quantityStr = item.replaceAll(".*\\s*x", "").trim();
+
+                int quantity = 1; 
+                if (quantityStr.matches("\\d+")) {
+                    quantity = Integer.parseInt(quantityStr);
+                }
+
+                
+                double itemPrice = menuPrices.getOrDefault(itemName, 0.0);
+
+                
+                BigDecimal totalPrice = BigDecimal.valueOf(itemPrice * quantity)
+                        .setScale(2, RoundingMode.HALF_UP);
+                
+                
+                int rowCount = sheet.getLastRowNum() + 1;
+                Row row = sheet.createRow(rowCount);
+                row.createCell(0).setCellValue(tableNumber);
+                row.createCell(1).setCellValue(itemName);
+                row.createCell(2).setCellValue(quantity);
+                row.createCell(3).setCellValue(totalPrice.doubleValue()); 
+            }
+
+            fos = new FileOutputStream(FILE_NAME);
+            workbook.write(fos);
+
+            System.out.println("Order recorded successfully in Excel!");
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            try {
+                if (fos != null) fos.close();
+                if (workbook != null) workbook.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}

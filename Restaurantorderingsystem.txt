@@ -1,0 +1,116 @@
+package restaurantorderingsystem;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.print.PrinterException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class ReceiptPanel extends JPanel {
+    private JTextArea receiptArea;
+    private JButton printButton;
+    private JButton closeButton;
+    private JFrame parentFrame;
+    
+    public ReceiptPanel(JFrame parent, String receiptContent) {
+        this.parentFrame = parent;
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        setBackground(Color.WHITE);
+        
+        
+        JLabel titleLabel = new JLabel("Receipt");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        
+        
+        receiptArea = new JTextArea(receiptContent);
+        receiptArea.setEditable(false);
+        receiptArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        receiptArea.setBackground(new Color(255, 255, 240)); 
+        receiptArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        
+        JScrollPane scrollPane = new JScrollPane(receiptArea);
+        scrollPane.setPreferredSize(new Dimension(350, 400));
+        
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        buttonPanel.setBackground(Color.WHITE);
+        
+        printButton = new JButton("Print Receipt");
+        printButton.addActionListener(e -> printReceipt());
+        
+        closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> closePanel());
+        
+        buttonPanel.add(printButton);
+        buttonPanel.add(closeButton);
+        
+        
+        add(titleLabel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+    
+    private void printReceipt() {
+        try {
+            boolean printed = receiptArea.print();
+            if (printed) {
+                JOptionPane.showMessageDialog(parentFrame, 
+                    "Receipt sent to printer successfully!", 
+                    "Print Status", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (PrinterException ex) {
+            JOptionPane.showMessageDialog(parentFrame, 
+                "Error printing receipt: " + ex.getMessage(), 
+                "Print Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private void closePanel() {
+        
+        Container container = getParent();
+        while (container != null && !(container instanceof JDialog)) {
+            container = container.getParent();
+        }
+        
+        if (container != null) {
+            ((JDialog) container).dispose();
+        }
+    }
+    
+    public static void showReceiptDialog(JFrame parent, String orderText, int tableNumber, double totalAmount) {
+        
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String timestamp = dateFormat.format(new Date());
+        
+        String receipt = "==================== RECEIPT ====================\n" +
+                         "Pizza Hut\n" +
+                         "Date: " + timestamp + "\n" +
+                         "Table Number: " + tableNumber + "\n" +
+                         "-------------------------------------------------\n" +
+                         orderText +
+                         "-------------------------------------------------\n" +
+                         "TOTAL: ₱" + String.format("%.2f", totalAmount) + "\n" +
+                         "Thank you for your order!\n" +
+                         "==================================================";
+        
+        
+        ReceiptPanel receiptPanel = new ReceiptPanel(parent, receipt);
+        
+        JDialog dialog = new JDialog(parent, "Order Receipt", true);
+        dialog.setContentPane(receiptPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parent);
+        dialog.setResizable(false);
+        dialog.setVisible(true);
+        
+        return;
+    }
+}

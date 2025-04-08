@@ -1,0 +1,46 @@
+package restaurantorderingsystem;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+
+public class TextFile {
+    private static final String SALES_FILE = "sales.txt";
+    
+    public static void recordOrder(int tableNumber, String orderDetails, double total, HashMap<String, Double> menuItemPrices) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(SALES_FILE, true))) {
+            
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String timestamp = dateFormat.format(new Date());
+            
+            
+            String[] orderItems = orderDetails.split("\n");
+            StringBuilder formattedOrder = new StringBuilder();
+            
+            for (String item : orderItems) {
+                formattedOrder.append(item).append("; ");
+            }
+            
+            writer.write("=====================================================");
+            writer.newLine();
+            writer.write("TRANSACTION: " + timestamp);
+            writer.newLine();
+            writer.write("TABLE: " + tableNumber);
+            writer.newLine();
+            writer.write("ITEMS: " + formattedOrder);
+            writer.newLine();
+            writer.write("TOTAL: ₱" + String.format("%.2f", total));
+            writer.newLine();
+            writer.write("=====================================================");
+            writer.newLine();
+            
+            System.out.println("Transaction recorded to " + SALES_FILE);
+        } catch (IOException e) {
+            System.err.println("Error writing to sales file: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}

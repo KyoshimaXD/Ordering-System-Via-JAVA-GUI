@@ -1,0 +1,123 @@
+package restaurantorderingsystem;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import javax.swing.JOptionPane;
+
+public class Salesdatabase {
+    
+    private static final String FILE_NAME = "Excelsales.xlsx";
+    private static final String FILE_PATH = System.getProperty("user.dir") + File.separator + FILE_NAME;
+
+    public static void recordSales(double dailySales, double weeklySales, double monthlySales, double annualSales) {
+        Workbook workbook = null;
+        FileInputStream fis = null;
+        FileOutputStream fos = null;
+
+        try {
+          
+            System.out.println("Attempting to record sales to: " + FILE_PATH);
+
+            File file = new File(FILE_PATH);
+            
+            
+            if (!file.exists()) {
+                workbook = new XSSFWorkbook();
+                Sheet sheet = workbook.createSheet("Sales_Summary");
+                createHeaders(sheet);
+            } else {
+             
+                fis = new FileInputStream(file);
+                workbook = new XSSFWorkbook(fis);
+            }
+
+            
+            Sheet sheet = workbook.getSheet("Sales_Summary");
+            if (sheet == null) {
+                sheet = workbook.createSheet("Sales_Summary");
+                createHeaders(sheet);
+            }
+
+            
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String currentDateTime = dateFormat.format(new Date());
+
+          
+            int lastRowNum = sheet.getLastRowNum();
+            Row row = sheet.createRow(lastRowNum + 1);
+
+            
+            row.createCell(0).setCellValue(currentDateTime);
+            row.createCell(1).setCellValue(dailySales);
+            row.createCell(2).setCellValue(weeklySales);
+            row.createCell(3).setCellValue(monthlySales);
+            row.createCell(4).setCellValue(annualSales);
+
+         
+            fos = new FileOutputStream(FILE_PATH);
+            workbook.write(fos);
+
+            System.out.println("Sales successfully recorded to: " + FILE_PATH);
+            
+        
+            JOptionPane.showMessageDialog(null, 
+                "Sales recorded successfully!", 
+                "Sales Recording", 
+                JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (IOException e) {
+            
+            System.err.println("Error recording sales: " + e.getMessage());
+            e.printStackTrace();
+            
+          
+            JOptionPane.showMessageDialog(null, 
+                "Error recording sales: " + e.getMessage(), 
+                "Sales Recording Error", 
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+        
+            try {
+                if (fis != null) fis.close();
+                if (fos != null) fos.close();
+                if (workbook != null) workbook.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void createHeaders(Sheet sheet) {
+        Row headerRow = sheet.createRow(0);
+        String[] headers = {"Date & Time", "Daily Sales", "Weekly Sales", "Monthly Sales", "Annual Sales"};
+
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            
+      
+            CellStyle style = sheet.getWorkbook().createCellStyle();
+            Font font = sheet.getWorkbook().createFont();
+            font.setBold(true);
+            style.setFont(font);
+            cell.setCellStyle(style);
+        }
+    }
+
+
+    public static void updateSalesFromOrder(double orderTotal) {
+        recordSales(
+            orderTotal, 
+            orderTotal,   
+            orderTotal,  
+            orderTotal    
+        );
+    }
+}
